@@ -1,0 +1,90 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Alien Skill Scan - Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b1a; --card:#0e1530; --glow:#6cf2ff; --accent:#9b7cff; --text:#e9f0ff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; color:var(--text);
+  background: radial-gradient(1200px 600px at 10% -10%, #16225a, transparent),
+              radial-gradient(800px 400px at 110% 10%, #2b1a5a, transparent),
+              var(--bg);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.header{padding:24px; display:flex; justify-content:space-between; align-items:center;}
+.brand{font-family: Orbitron, monospace; letter-spacing:1px; font-weight:600; color:var(--glow); text-shadow:0 0 12px rgba(108,242,255,.6);}
+.container{max-width:1100px; margin:0 auto; padding:16px;}
+.card{background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--card);
+  border-radius:16px; padding:20px; box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:900px){ .grid{grid-template-columns:1fr;} }
+h1,h2{font-family: Orbitron, monospace}
+a{color:#bfefff; text-decoration:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">👽 Alien Skill Scan</div>
+  <div><a href="index.html">Assessment</a> | <a href="admin.html">Admin</a></div>
+</div>
+<div class="container">
+  <div class="card">
+    <h1>Class Dashboard</h1>
+    <p id="count"></p>
+  </div>
+  <div class="grid" style="margin-top:16px;">
+    <div class="card"><h2>Skill Averages (Bar)</h2><canvas id="bar"></canvas></div>
+    <div class="card"><h2>Overall Proficiency (Pie)</h2><canvas id="pie"></canvas></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const data = JSON.parse(localStorage.getItem("assessments")||"[]");
+document.getElementById("count").textContent = "Total students: " + data.length;
+
+const sums = {frontend:0, git:0, backend:0, basics:0, productivity:0};
+const counts = {frontend:0, git:0, backend:0, basics:0, productivity:0};
+
+data.forEach(s=>{
+  s.answers.forEach(a=>{
+    sums[a.k]+=a.score;
+    counts[a.k]++;
+  });
+});
+
+const labels = Object.keys(sums);
+const avgs = labels.map(k=> counts[k] ? (sums[k]/counts[k]).toFixed(2) : 0);
+
+// Bar chart
+new Chart(document.getElementById("bar"), {
+  type: 'bar',
+  data: { labels, datasets: [{ label: 'Average Score (0-3)', data: avgs }] },
+  options: { scales: { y: { beginAtZero: true, max: 3 } } }
+});
+
+// Overall proficiency buckets
+let beg=0, inter=0, adv=0;
+data.forEach(s=>{
+  const total = s.answers.reduce((x,y)=>x+y.score,0);
+  const avg = total / s.answers.length;
+  if(avg < 1) beg++; else if(avg < 2.3) inter++; else adv++;
+});
+
+new Chart(document.getElementById("pie"), {
+  type: 'pie',
+  data: { labels: ['Beginner','Intermediate','Advanced'], datasets: [{ data: [beg, inter, adv] }] }
+});
+</script>
+</body>
+</html>

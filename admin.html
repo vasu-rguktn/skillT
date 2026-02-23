@@ -1,0 +1,130 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Alien Skill Scan - Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#070b1a; --card:#0e1530; --glow:#6cf2ff; --accent:#9b7cff; --text:#e9f0ff; }
+*{box-sizing:border-box}
+body{ margin:0; min-height:100vh; color:var(--text);
+  background: radial-gradient(1200px 600px at 10% -10%, #16225a, transparent),
+              radial-gradient(800px 400px at 110% 10%, #2b1a5a, transparent),
+              var(--bg);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.header{padding:24px; display:flex; justify-content:space-between; align-items:center;}
+.brand{font-family: Orbitron, monospace; letter-spacing:1px; font-weight:600; color:var(--glow); text-shadow:0 0 12px rgba(108,242,255,.6);}
+.container{max-width:1100px; margin:0 auto; padding:16px;}
+.card{background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--card);
+  border-radius:16px; padding:20px; box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);}
+.grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:16px;}
+@media (max-width:900px){ .grid{grid-template-columns:1fr;} }
+h1,h2{font-family: Orbitron, monospace}
+input, button{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b1025; color:var(--text); }
+button.primary{ background: linear-gradient(135deg, var(--glow), var(--accent)); color:#040815; border:none; font-weight:700; cursor:pointer; box-shadow:0 0 20px rgba(108,242,255,.4); }
+.team{ background:#0b1025; border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px; }
+a{color:#bfefff; text-decoration:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">👽 Alien Skill Scan</div>
+  <div><a href="index.html">Assessment</a> | <a href="dashboard.html">Dashboard</a></div>
+</div>
+
+<div class="container">
+  <div class="card" id="loginCard">
+    <h1>Admin Login</h1>
+    <input id="user" placeholder="Username" />
+    <br/><br/>
+    <input id="pass" type="password" placeholder="Password" />
+    <br/><br/>
+    <button class="primary" onclick="login()">Login</button>
+    <p id="loginMsg"></p>
+  </div>
+
+  <div class="card" id="adminCard" style="display:none;">
+    <h1>Team Generator (Vasu Only)</h1>
+    <p>Rules: 6 members per team, mix genders, avoid consecutive roll numbers as much as possible, reshuffle every time.</p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <button class="primary" onclick="generate()">Generate Teams</button>
+      <button onclick="resetData()">Reset All Data</button>
+    </div>
+    <div id="teams" class="grid" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<script>
+const ADMIN_USER = "vasu";
+const ADMIN_PASS = "admin123";
+
+function login(){
+  if(user.value === ADMIN_USER && pass.value === ADMIN_PASS){
+    loginCard.style.display = "none";
+    adminCard.style.display = "block";
+  } else {
+    loginMsg.textContent = "Invalid credentials";
+  }
+}
+
+function resetData(){
+  if(confirm("This will delete all assessments. Continue?")){
+    localStorage.removeItem("assessments");
+    alert("Data cleared.");
+  }
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function generate(){
+  const data = JSON.parse(localStorage.getItem("assessments")||"[]");
+  if(data.length === 0){ alert("No student data yet."); return; }
+
+  // Separate by gender for better mixing
+  const males = data.filter(s=>s.gender==="Male");
+  const females = data.filter(s=>s.gender==="Female");
+  const others = data.filter(s=>s.gender==="Other");
+
+  shuffle(males); shuffle(females); shuffle(others);
+
+  // Merge alternating for mix
+  let merged = [];
+  while(males.length || females.length || others.length){
+    if(males.length) merged.push(males.pop());
+    if(females.length) merged.push(females.pop());
+    if(others.length) merged.push(others.pop());
+  }
+
+  // Try to avoid consecutive roll numbers by additional shuffle passes
+  for(let k=0;k<5;k++){
+    shuffle(merged);
+  }
+
+  const teams = [];
+  for(let i=0;i<merged.length;i+=6){
+    teams.push(merged.slice(i, i+6));
+  }
+
+  const wrap = document.getElementById("teams");
+  wrap.innerHTML = "";
+  teams.forEach((team, idx)=>{
+    const div = document.createElement("div");
+    div.className = "team";
+    div.innerHTML = `<h2>Team ${idx+1}</h2>` + team.map(s=>`<div>${s.roll} - ${s.name} (${s.gender})</div>`).join("");
+    wrap.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>

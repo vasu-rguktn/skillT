@@ -1,0 +1,191 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Alien Skill Scan - Student Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b1a;
+  --card:#0e1530;
+  --glow:#6cf2ff;
+  --accent:#9b7cff;
+  --text:#e9f0ff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; color:var(--text);
+  background: radial-gradient(1200px 600px at 10% -10%, #16225a, transparent),
+              radial-gradient(800px 400px at 110% 10%, #2b1a5a, transparent),
+              var(--bg);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.header{
+  padding:24px; display:flex; justify-content:space-between; align-items:center;
+}
+.brand{
+  font-family: Orbitron, monospace; letter-spacing:1px; font-weight:600;
+  color:var(--glow); text-shadow:0 0 12px rgba(108,242,255,.6);
+}
+.container{max-width:980px; margin:0 auto; padding:16px;}
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--card);
+  border-radius:16px; padding:20px; box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.grid{display:grid; grid-template-columns: repeat(2, 1fr); gap:16px;}
+@media (max-width:720px){ .grid{grid-template-columns:1fr;} }
+h1,h2{font-family: Orbitron, monospace}
+label{display:block; margin:10px 0 6px}
+input, select, textarea, button{
+  width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+  background:#0b1025; color:var(--text); outline:none;
+}
+textarea{min-height:90px}
+button.primary{
+  background: linear-gradient(135deg, var(--glow), var(--accent));
+  color:#040815; border:none; font-weight:700; cursor:pointer;
+  box-shadow:0 0 20px rgba(108,242,255,.4);
+}
+.q{
+  margin:14px 0; padding:14px; border-radius:12px; background:#0b1025; border:1px solid rgba(255,255,255,.08);
+}
+.options{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+@media (max-width:720px){ .options{grid-template-columns:1fr 1fr;} }
+.badge{display:inline-block; padding:6px 10px; border-radius:999px; background:#0b1025; border:1px solid rgba(255,255,255,.12); margin-right:6px}
+.footer{opacity:.7; text-align:center; padding:16px}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">👽 Alien Skill Scan</div>
+    <div>
+      <a href="dashboard.html" style="color:#bfefff; text-decoration:none; margin-right:12px;">Dashboard</a>
+      <a href="admin.html" style="color:#d9c8ff; text-decoration:none;">Admin</a>
+    </div>
+  </div>
+  <div class="container">
+    <div class="card">
+      <h1>Student Assessment</h1>
+      <p class="badge">Frontend</p><p class="badge">Git</p><p class="badge">Backend</p><p class="badge">Basics</p><p class="badge">Productivity</p>
+      <form id="form">
+        <div class="grid">
+          <div>
+            <label>Name</label>
+            <input required id="name" placeholder="Your name"/>
+          </div>
+          <div>
+            <label>Roll Number</label>
+            <input required id="roll" placeholder="e.g., 23CS001"/>
+          </div>
+          <div>
+            <label>Gender</label>
+            <select required id="gender">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label>How many keyboard shortcuts do you know? (number)</label>
+            <input type="number" min="0" id="shortcuts" placeholder="e.g., 15"/>
+          </div>
+        </div>
+
+        <div id="questions"></div>
+
+        <label>If you feel weak in any area, what is the reason?</label>
+        <textarea id="reason" placeholder="Write briefly..."></textarea>
+
+        <button class="primary" type="submit">Submit Assessment</button>
+        <p id="msg"></p>
+      </form>
+    </div>
+  </div>
+  <div class="footer">Futuristic UI • Data stored locally in your browser</div>
+
+<script>
+const QUESTION_POOL = [
+  {k:"frontend", t:"Are you familiar with HTML, CSS, JS basics and can you write them without copying?", type:"mcq"},
+  {k:"frontend", t:"Can you build a simple responsive page on your own?", type:"mcq"},
+  {k:"git", t:"Do you know how to init a repo, commit, and push to GitHub?", type:"mcq"},
+  {k:"git", t:"Can you resolve simple merge conflicts?", type:"mcq"},
+  {k:"backend", t:"Are you comfortable with basic backend (PHP/Node) and CRUD?", type:"mcq"},
+  {k:"backend", t:"Do you know how to connect to a database and fetch data?", type:"mcq"},
+  {k:"basics", t:"Do you understand folder structure and file organization?", type:"mcq"},
+  {k:"basics", t:"Do you know basic computer concepts (OS, files, paths)?", type:"mcq"},
+  {k:"productivity", t:"If given a medium project, can you complete it with help of AI?", type:"mcq"},
+  {k:"productivity", t:"Do you use dev tools, extensions, or linters?", type:"mcq"},
+  {k:"frontend", t:"Can you debug simple JS errors using console?", type:"mcq"},
+  {k:"git", t:"Do you use branches and pull requests?", type:"mcq"},
+  {k:"backend", t:"Do you understand APIs (GET/POST) and JSON?", type:"mcq"},
+  {k:"basics", t:"Do you know how to set up a local dev environment?", type:"mcq"},
+  {k:"productivity", t:"Can you search and read docs effectively?", type:"mcq"},
+];
+
+const OPTIONS = [
+  {label:"Advanced", score:3},
+  {label:"Intermediate", score:2},
+  {label:"Beginner", score:1},
+  {label:"Don't know", score:0},
+];
+
+function pickRandom(n){
+  const arr = [...QUESTION_POOL];
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr.slice(0,n);
+}
+
+const selected = pickRandom(12);
+const qWrap = document.getElementById("questions");
+
+selected.forEach((q, idx)=>{
+  const div = document.createElement("div");
+  div.className="q";
+  div.innerHTML = `
+    <strong>Q${idx+1}. ${q.t}</strong>
+    <div class="options">
+      ${OPTIONS.map((o,i)=>`
+        <label><input type="radio" name="q${idx}" value="${o.score}" required/> ${o.label}</label>
+      `).join("")}
+    </div>
+    <input type="hidden" name="k${idx}" value="${q.k}"/>
+  `;
+  qWrap.appendChild(div);
+});
+
+document.getElementById("form").addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const data = {
+    name: name.value.trim(),
+    roll: roll.value.trim(),
+    gender: gender.value,
+    shortcuts: parseInt(shortcuts.value||"0",10),
+    reason: reason.value.trim(),
+    answers: []
+  };
+  const form = new FormData(e.target);
+  selected.forEach((q, idx)=>{
+    const score = parseInt(form.get("q"+idx),10);
+    data.answers.push({k:q.k, score});
+  });
+  const all = JSON.parse(localStorage.getItem("assessments")||"[]");
+  // replace if same roll exists
+  const idx = all.findIndex(x=>x.roll===data.roll);
+  if(idx>=0) all[idx]=data; else all.push(data);
+  localStorage.setItem("assessments", JSON.stringify(all));
+  document.getElementById("msg").textContent = "Saved! You can close this or view Dashboard.";
+  e.target.reset();
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+</script>
+</body>
+</html>
